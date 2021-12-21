@@ -668,7 +668,7 @@ io.on("connection", socket => {
                 });
 
 
-                socket.emit('message', formatMessage("DISBOT", 'Welcome to ChatNow!'));
+                socket.emit('message', formatMessage("DISBOT", 'Welcome to 🏅SportTalk!'));
 
                 // Broadcast when a user connects
                 socket.to(obj.room_id).emit(
