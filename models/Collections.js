@@ -18,7 +18,9 @@ mongoose.connect("mongodb://localhost:27017/chatrooms");
 const userschema = new mongoose.Schema({
     username: String,
     password: String,
+    email: String,
     otp: String,
+
     private_rooms: [{ room_name: String, room_id: String }],
     public_rooms: [{ room_name: String }],
 

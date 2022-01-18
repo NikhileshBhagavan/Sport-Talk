@@ -70,8 +70,8 @@ const io = new Server(server);
 
 app.get("/", function(req, res) {
 
-
-    res.render("credentials");
+    let message = req.flash("error");
+    res.render("credentials", { messages: message });
 });
 
 server.listen(PORT, function(req, res) {
@@ -81,28 +81,39 @@ server.listen(PORT, function(req, res) {
 app.post("/register", function(req, res) {
     console.log(req.body);
     console.log(req.flash("error"));
-    models.User.register({ username: req.body.username }, req.body.password, function(err, user) {
-        if (err) {
-            console.log(err);
+
+    models.User.find({ email: req.body.email }, function(err, docs) {
+        if (docs.length > 0) {
+            req.flash("error", "email already taken");
             res.redirect("/");
         } else {
-            passport.authenticate("local")(req, res, function() {
-                console.log(req.body.signupremember.length + " " + req.body.signupremember);
-                if (req.body.signupremember.length === 13) {
 
-                    req.session.cookie.expires = false; //4 weeks
+
+            models.User.register({ username: req.body.username, email: req.body.email }, req.body.password, function(err, user) {
+                if (err) {
+                    console.log(err);
+                    res.redirect("/");
                 } else {
-                    var hour = 3600000;
-                    req.session.cookie.maxAge = 2 * 14 * 24 * hour;
+                    passport.authenticate("local")(req, res, function() {
+                        console.log(req.body.signupremember.length + " " + req.body.signupremember);
+                        if (req.body.signupremember.length === 13) {
 
+                            req.session.cookie.expires = false; //4 weeks
+                        } else {
+                            var hour = 3600000;
+                            req.session.cookie.maxAge = 2 * 14 * 24 * hour;
+
+                        }
+                        console.log(req.session.cookie);
+
+
+                        res.redirect("/roomassign");
+                    });
                 }
-                console.log(req.session.cookie);
-
-
-                res.redirect("/roomassign");
             });
         }
     });
+
 });
 
 
@@ -193,6 +204,7 @@ app.post("/checkuser", function(req, res) {
     });
 
 });
+
 app.post('/login',
     passport.authenticate('local', { failureRedirect: '/failuremediate' }),
     function(req, res) {
@@ -262,7 +274,7 @@ function generateOTP() {
 app.post("/forgotpassword", function(req, res) {
     models.User.find({ username: req.body.username }, function(err, docs) {
         if (err) {
-            req.flash("error", "Got an error try again");
+            req.flash("error", "Got an error try again ");
             res.redirect("/forgotpassword");
         } else {
             if (docs.length === 1) {
@@ -276,19 +288,21 @@ app.post("/forgotpassword", function(req, res) {
                         pass: process.env.PASSWORD
                     }
                 });
+                console.log(docs)
 
                 var mailOptions = {
                     from: process.env.EMAIL,
-                    to: "" + req.body.email,
-                    subject: 'OTP FOR TODOLIST',
+                    to: "" + docs[0].email,
+                    subject: 'OTP FOR 🏅SportTalk',
                     text: "YOUR OTP TO SET NEW PASSWORD" + " " + a
                 };
 
                 transporter.sendMail(mailOptions, function(error, info) {
                     if (error) {
-                        req.flash("error", "Got an error try again");
+                        req.flash("error", "Got an error try again ");
                         res.redirect("/forgotpassword");
                     } else {
+                        req.flash("error", "OTP is sent to Your Registered Email ");
                         res.redirect("/changepassword/" + req.body.username);
                     }
                 });
